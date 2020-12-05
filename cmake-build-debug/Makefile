@@ -170,6 +170,33 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+src/graphcut.o: src/graphcut.cpp.o
+
+.PHONY : src/graphcut.o
+
+# target to build an object file
+src/graphcut.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/src/graphcut.cpp.o
+.PHONY : src/graphcut.cpp.o
+
+src/graphcut.i: src/graphcut.cpp.i
+
+.PHONY : src/graphcut.i
+
+# target to preprocess a source file
+src/graphcut.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/src/graphcut.cpp.i
+.PHONY : src/graphcut.cpp.i
+
+src/graphcut.s: src/graphcut.cpp.s
+
+.PHONY : src/graphcut.s
+
+# target to generate assembly for a file
+src/graphcut.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/src/graphcut.cpp.s
+.PHONY : src/graphcut.cpp.s
+
 src/texture.o: src/texture.cpp.o
 
 .PHONY : src/texture.o
@@ -209,6 +236,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... src/graphcut.o"
+	@echo "... src/graphcut.i"
+	@echo "... src/graphcut.s"
 	@echo "... src/texture.o"
 	@echo "... src/texture.i"
 	@echo "... src/texture.s"

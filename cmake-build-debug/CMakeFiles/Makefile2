@@ -94,12 +94,12 @@ clean: CMakeFiles/GraphCut-Textures.dir/clean
 CMakeFiles/GraphCut-Textures.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles --progress-num=1,2,3 "Built target GraphCut-Textures"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles --progress-num=1,2,3,4 "Built target GraphCut-Textures"
 .PHONY : CMakeFiles/GraphCut-Textures.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/GraphCut-Textures.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles 4
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/GraphCut-Textures.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles 0
 .PHONY : CMakeFiles/GraphCut-Textures.dir/rule
