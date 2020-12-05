@@ -1,0 +1,3 @@
+/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/cmake-build-debug/CMakeFiles/GraphCut-Textures.dir
