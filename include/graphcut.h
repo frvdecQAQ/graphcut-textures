@@ -45,6 +45,7 @@ private:
     MaxFlow *flow;
     enum Strategy choice;
     double para_k = 0.5;
+    const double para_p_scale = 1000.0;
 };
 
 #endif //PROJECT_GRAPHCUT_H

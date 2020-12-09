@@ -32,7 +32,9 @@ cstdio
 opencv2/opencv.hpp
 -
 
-/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/src/graphcut.cpp
+/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/main.cpp
+iostream
+-
 graphcut.h
 -
 

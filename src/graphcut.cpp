@@ -21,14 +21,15 @@ void GraphCut::set_choice(enum Strategy para) {
 void GraphCut::set_para_k(double k){
     para_k = k;
 }
+
 int GraphCut::randomInt(int st, int ed) {
-    static std::default_random_engine e(time(nullptr));
-    static std::uniform_int_distribution<int> u(st, ed);
+    std::default_random_engine e(time(nullptr));
+    std::uniform_int_distribution<int> u(st, ed);
     return u(e);
 }
 double GraphCut::randomDouble(double st, double ed){
-    static std::default_random_engine e(time(nullptr));
-    static std::uniform_real_distribution<double> u(st, ed);
+    std::default_random_engine e(time(nullptr));
+    std::uniform_real_distribution<double> u(st, ed);
     return u(e);
 }
 bool GraphCut::checkIn(int h, int w, int i, int j) {
@@ -103,10 +104,12 @@ bool GraphCut::chooseOffset(int &x, int &y, std::pair<int,int> *pixel_source_pos
             for(int i = 0; i < limit_x; ++i){
                 for(int j = 0; j < limit_y; ++j){
                     int overlap_cnt = 0;
+                    int patch_pixel_cnt = 0;
                     long long diff = 0;
                     for(int pos_x = i; pos_x < std::min(h, i+patch_height); ++pos_x){
                         for(int pos_y = j; pos_y < std::min(w, j+patch_width); ++pos_y){
                             int id = transformId(h, w, pos_x, pos_y);
+                            patch_pixel_cnt++;
                             if(pixel_source_pos[id].first == -1)continue;
                             overlap_cnt++;
                             cv::Vec3b original_color = result->texture.at<cv::Vec3b>(pos_x, pos_y);
@@ -116,10 +119,12 @@ bool GraphCut::chooseOffset(int &x, int &y, std::pair<int,int> *pixel_source_pos
                                                          abs(original_color[2]-patch_color[2])));
                         }
                     }
-                    if(overlap_cnt == 0)p = 1.0;
+                    if(overlap_cnt == 0 || patch_pixel_cnt == overlap_cnt){
+                        p = 0.0;
+                    }
                     else{
                         diff /= overlap_cnt;
-                        p = exp((double)(-diff)/(para_k*var));
+                        p = para_p_scale*exp((double)(-diff)/(para_k*var));
                     }
                     p_record.push_back(p);
                     p_sum += p;
@@ -183,7 +188,10 @@ bool GraphCut::combineAndCut(std::pair<int,int> *pixel_source_pos, int x, int y,
             int nxt_x = pos.first+dx[k];
             int nxt_y = pos.second+dy[k];
             int nxt_id = transformId(h, w, nxt_x, nxt_y);
-            if(!checkIn(h, w, nxt_x, nxt_y))continue;
+            if(!checkIn(h, w, nxt_x, nxt_y)){
+                if(checkIn(patch_height, patch_width, nxt_x-x, nxt_y-y))belong_patch++;
+                continue;
+            }
             if(id_to_node.count(nxt_id)){
                 if(k&1)continue;
                 double w_cut = calculateCutCost(pos.first, pos.second, nxt_x, nxt_y, x, y);
@@ -267,7 +275,8 @@ bool GraphCut::run(int h, int w, int iter) {
         printf("combine done!\n");
         run_iter++;
         printf("run_iter = %d\n", run_iter);
-        show();
+        printf("pixel = %d\n", pixel_has_source);
+        //show();
     }
     return true;
 }
