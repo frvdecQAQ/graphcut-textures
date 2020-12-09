@@ -18,8 +18,8 @@ GraphCut::~GraphCut() {
 void GraphCut::set_choice(enum Strategy para) {
     choice = para;
 }
-void GraphCut::set_k(double k){
-    this->k = k;
+void GraphCut::set_para_k(double k){
+    para_k = k;
 }
 int GraphCut::randomInt(int st, int ed) {
     static std::default_random_engine e(time(nullptr));
@@ -48,7 +48,13 @@ double GraphCut::calculateCutCost(int x, int y, int nxt_x, int nxt_y, int offset
     cv::Vec3b original_color_v = result->texture.at<cv::Vec3b>(nxt_x, nxt_y);
     cv::Vec3b patch_color_u = patch->texture.at<cv::Vec3b>(x-offset_x, y-offset_y);
     cv::Vec3b patch_color_v = patch->texture.at<cv::Vec3b>(nxt_x-offset_x, nxt_y-offset_y);
-    return vecLength(original_color_u-patch_color_u)+vecLength(original_color_v-patch_color_v);
+    cv::Vec3b color_u = cv::Vec3b(abs(original_color_u[0]-patch_color_u[0]),
+                                  abs(original_color_u[1]-patch_color_u[1]),
+                                  abs(original_color_u[2]-patch_color_u[2]));
+    cv::Vec3b color_v = cv::Vec3b(abs(original_color_v[0]-patch_color_v[1]),
+                                  abs(original_color_v[1]-patch_color_v[1]),
+                                  abs(original_color_v[2]-patch_color_v[2]));
+    return vecLength(color_u)+vecLength(color_v);
 }
 double GraphCut::resultPixelVar(std::pair<int, int> *pixel_source_pos) {
     int h = result->get_height();
@@ -105,13 +111,15 @@ bool GraphCut::chooseOffset(int &x, int &y, std::pair<int,int> *pixel_source_pos
                             overlap_cnt++;
                             cv::Vec3b original_color = result->texture.at<cv::Vec3b>(pos_x, pos_y);
                             cv::Vec3b patch_color = patch->texture.at<cv::Vec3b>(pos_x-i, pos_y-j);
-                            diff += vecLength2(original_color-patch_color);
+                            diff += vecLength2(cv::Vec3b(abs(original_color[0]-patch_color[0]),
+                                                         abs(original_color[1]-patch_color[1]),
+                                                         abs(original_color[2]-patch_color[2])));
                         }
                     }
                     if(overlap_cnt == 0)p = 1.0;
                     else{
                         diff /= overlap_cnt;
-                        p = exp((double)(-diff)/(k*var));
+                        p = exp((double)(-diff)/(para_k*var));
                     }
                     p_record.push_back(p);
                     p_sum += p;
@@ -181,7 +189,6 @@ bool GraphCut::combineAndCut(std::pair<int,int> *pixel_source_pos, int x, int y,
                 double w_cut = calculateCutCost(pos.first, pos.second, nxt_x, nxt_y, x, y);
                 //printf("w = %lf\n", w_cut);
                 if(fabs(w_cut) > MaxFlow::eps)flow->addEdge(node_id, id_to_node[nxt_id], w_cut);
-                //printf("%d %d %lf\n", node_id, id_to_node[nxt_id], w_cut);
             }
             else{
                 if(checkIn(patch_height, patch_width, nxt_x-x, nxt_y-y)){

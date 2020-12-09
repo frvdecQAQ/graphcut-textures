@@ -22,7 +22,7 @@ public:
     explicit GraphCut(const char *);
     ~GraphCut();
     void set_choice(enum Strategy);
-    void set_k(double);
+    void set_para_k(double);
     bool run(int, int, int iter = -1);
     void show();
     void store(const char *);
@@ -44,7 +44,7 @@ private:
     Texture *result;
     MaxFlow *flow;
     enum Strategy choice;
-    double k = 0.5;
+    double para_k = 0.5;
 };
 
 #endif //PROJECT_GRAPHCUT_H

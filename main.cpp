@@ -4,7 +4,7 @@
 int main() {
     auto *graph_cut = new GraphCut("../data/green.gif");
     graph_cut->set_choice(kGlobalBestChoice);
-    if(graph_cut->run(80, 80, 3)){
+    if(graph_cut->run(80, 80, 8)){
         printf("yes\n");
     }else{
         printf("no\n");
