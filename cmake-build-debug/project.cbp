@@ -84,6 +84,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/include/MaxFlow.h">
+			<Option target="GraphCut-Textures"/>
+		</Unit>
 		<Unit filename="/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/include/graphcut.h">
 			<Option target="GraphCut-Textures"/>
 		</Unit>
@@ -91,6 +94,9 @@
 			<Option target="GraphCut-Textures"/>
 		</Unit>
 		<Unit filename="/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/main.cpp">
+			<Option target="GraphCut-Textures"/>
+		</Unit>
+		<Unit filename="/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/src/MaxFlow.cpp">
 			<Option target="GraphCut-Textures"/>
 		</Unit>
 		<Unit filename="/Users/andy/Desktop/大四上/媒体计算/project1/GraphCut-Textures/src/graphcut.cpp">

@@ -11,13 +11,11 @@
 class Texture{
 public:
     cv::Mat texture;
-
     explicit Texture(const char *);
     Texture(int, int, int);
     ~Texture();
-
-    int get_height();
-    int get_width();
+    int get_height() const;
+    int get_width() const;
     int get_channels();
     bool get_has_read() const;
 

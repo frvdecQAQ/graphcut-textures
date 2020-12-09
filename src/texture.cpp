@@ -1,7 +1,7 @@
 //
 // Created by 安頔 on 2020/12/5.
 //
-#include "texture.h"
+#include <texture.h>
 
 Texture::Texture(const char *img_path) {
     texture = cv::imread(img_path);
@@ -30,7 +30,6 @@ Texture::Texture(const char *img_path) {
     height = texture.rows;
     channels = texture.channels();
 }
-
 Texture::Texture(int height, int width, int type){
     has_read = true;
     this->width = width;
@@ -38,23 +37,18 @@ Texture::Texture(int height, int width, int type){
     this->channels = (int)(type/8)+1;
     texture = cv::Mat(height, width, type);
 }
-
 Texture::~Texture() {
     texture.release();
 }
-
-int Texture::get_height() {
+int Texture::get_height() const {
     return height;
 }
-
-int Texture::get_width() {
+int Texture::get_width() const {
     return width;
 }
-
 int Texture::get_channels() {
     return channels;
 }
-
 bool Texture::get_has_read() const {
     return has_read;
 }

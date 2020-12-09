@@ -170,6 +170,33 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+src/MaxFlow.o: src/MaxFlow.cpp.o
+
+.PHONY : src/MaxFlow.o
+
+# target to build an object file
+src/MaxFlow.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/src/MaxFlow.cpp.o
+.PHONY : src/MaxFlow.cpp.o
+
+src/MaxFlow.i: src/MaxFlow.cpp.i
+
+.PHONY : src/MaxFlow.i
+
+# target to preprocess a source file
+src/MaxFlow.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/src/MaxFlow.cpp.i
+.PHONY : src/MaxFlow.cpp.i
+
+src/MaxFlow.s: src/MaxFlow.cpp.s
+
+.PHONY : src/MaxFlow.s
+
+# target to generate assembly for a file
+src/MaxFlow.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/GraphCut-Textures.dir/build.make CMakeFiles/GraphCut-Textures.dir/src/MaxFlow.cpp.s
+.PHONY : src/MaxFlow.cpp.s
+
 src/graphcut.o: src/graphcut.cpp.o
 
 .PHONY : src/graphcut.o
@@ -236,6 +263,9 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... src/MaxFlow.o"
+	@echo "... src/MaxFlow.i"
+	@echo "... src/MaxFlow.s"
 	@echo "... src/graphcut.o"
 	@echo "... src/graphcut.i"
 	@echo "... src/graphcut.s"
