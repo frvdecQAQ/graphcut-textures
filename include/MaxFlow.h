@@ -21,6 +21,7 @@ public:
     double dinic();
     void dfsFromStart(bool*);
 
+    int node_cnt;
     constexpr static const double inf = 1e12;
     constexpr static const double eps = 1e-8;
 
@@ -28,7 +29,6 @@ private:
     void add(int, int, double);
     bool bfs();
     double dfs(int, double);
-    int node_cnt;
     double *cap;
     int *h, *nxt, *to, *vis;
     int s{0}, t{1}, cnt{1};

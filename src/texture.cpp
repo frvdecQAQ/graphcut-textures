@@ -35,7 +35,7 @@ Texture::Texture(int height, int width, int type){
     this->width = width;
     this->height = height;
     this->channels = (int)(type/8)+1;
-    texture = cv::Mat(height, width, type);
+    texture = cv::Mat::zeros(height, width, type);
 }
 Texture::~Texture() {
     texture.release();

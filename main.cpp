@@ -2,15 +2,12 @@
 #include <graphcut.h>
 
 int main() {
-    auto *graph_cut = new GraphCut("../data/green.gif");
-    graph_cut->set_choice(kGlobalBestChoice);
-    graph_cut->set_para_k(0.3);
-    if(graph_cut->run(80, 80, -1)){
-        printf("yes\n");
-    }else{
-        printf("no\n");
-    }
-    graph_cut->store("../data/test_green.jpg");
+    auto *graph_cut = new GraphCut("../data/strawberries2.gif");
+    graph_cut->set_choose_option(kGlobalBestChoice);
+    if(graph_cut->run(300, 300, 20))printf("DONE\n");
+    else printf("ERROR\n");
+    graph_cut->storeSeam("../result/test_seam.jpg");
+    graph_cut->store("../result/test.jpg");
     delete graph_cut;
     return 0;
 }

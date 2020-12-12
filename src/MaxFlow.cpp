@@ -32,7 +32,7 @@ void MaxFlow::set_t(int ed) {
 }
 void MaxFlow::set_node_cnt(int cnt) {
     node_cnt = cnt;
-    printf("%d\n", cnt);
+    //printf("%d\n", cnt);
 }
 void MaxFlow::addEdge(int u, int v, double w) {
     add(u, v, w);
