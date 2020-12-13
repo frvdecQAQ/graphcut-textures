@@ -50,6 +50,9 @@ private:
     double *seam_left_sum{nullptr};
     double *seam_up_sum{nullptr};
 
+    double para_k = 0.05;
+    double para_scale = 1000;
+
     Texture *init_patch;
     Texture *combine_patch;
     Texture *result;
@@ -74,6 +77,10 @@ private:
     void chooseOffsetLocal();
     static double calculateCost(const cv::Vec3i &origin_color_u, const cv::Vec3i &origin_color_v,
                   const cv::Vec3i &patch_color_u, const cv::Vec3i &patch_color_v);
+    static cv::Mat fft(Texture *a, Texture* b);
+    double resultPixelVar();
+
+    double randomDouble(double st, double ed);
 };
 
 #endif //PROJECT_GRAPHCUT_H

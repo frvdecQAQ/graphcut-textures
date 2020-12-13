@@ -27,6 +27,12 @@ GraphCut::~GraphCut() {
     delete[] seam_up_sum;
 }
 
+double GraphCut::randomDouble(double st, double ed) {
+    static std::default_random_engine e(time(nullptr));
+    std::uniform_real_distribution<double> u(st, ed);
+    return u(e);
+}
+
 int GraphCut::randomInt(int st, int ed) {
     static std::default_random_engine e(time(nullptr));
     std::uniform_int_distribution<int> u(st, ed);
@@ -111,17 +117,20 @@ void GraphCut::buildGraph(int run_iter) {
     flow->set_node_cnt(node_cnt+10);
     double max_flow_ans = flow->dinic();
     if(max_flow_ans  >= MaxFlow::inf){
-        printf("max_flow_ans = %lf\n", max_flow_ans);
-        printf("cut_cost = %lf\n", cut_cost);
+        //printf("max_flow_ans = %lf\n", max_flow_ans);
+        //printf("cut_cost = %lf\n", cut_cost);
         cut_cost = cut_cost_copy;
-        printf(".....\n");
+        //printf(".....\n");
         return;
     }
     cut_cost += max_flow_ans;
     printf("cut_cost = %lf\n", cut_cost);
     assert(!(pixel_vis_cnt == result_h*result_w && cut_cost-cut_cost_copy > MaxFlow::eps));
     bool *s_arrive = new bool[node_cnt+10];
+    //printf("here\n");
     flow->dfsFromStart(s_arrive);
+    //printf("there\n");
+    //printf("offset = %d %d\n", offset_x, offset_y);
     for(int i = offset_x; i < std::min(offset_x+combine_patch_h, result_h); ++i){
         for(int j = offset_y; j < std::min(offset_y+combine_patch_w, result_w); ++j){
             int id = posToId(result_w, i, j);
@@ -170,10 +179,14 @@ bool GraphCut::run(int h, int w, int iter) {
     while(pixel_vis_cnt != result_h*result_w){
         run_iter++;
         calculatePixelVisSum();
+        printf("1 ");
         chooseOffset();
+        printf("2 ");
         buildGraph(run_iter);
-        printf("%d\n", pixel_vis_cnt);
-        //showResult();
+        printf("pixel = %d\n", pixel_vis_cnt);
+        if(run_iter % 10 == 0) {
+            showResult();
+        }
     }
     calculatePixelVisSum();
     printf("------------------\n");
@@ -269,39 +282,89 @@ void GraphCut::chooseOffsetGlobal() {
             can_random_pos.emplace_back(i, j);
         }
     }
-    double error_c = MaxFlow::inf;
-    int can_random_pos_size = (int)(can_random_pos.size());
-    int T = 1000;
-    offset_x = -1; offset_y = -1;
-    while(T--){
-        int rand_index = randomInt(0, can_random_pos_size-1);
-        int x = can_random_pos[rand_index].first;
-        int y = can_random_pos[rand_index].second;
-        int overlap_cnt = 0;
-        double diff = 0;
-        //TODO
-        for(int i = x; i < std::min(i+patch_h, result_h); ++i){
-            for(int j = y; j < std::min(j+patch_w, result_w); ++j){
-                int id = posToId(result_w, i, j);
-                if(pixel_vis[id] == -1)continue;
-                overlap_cnt++;
-                cv::Vec3i result_color = result->texture.at<cv::Vec3b>(i, j);
-                cv::Vec3i patch_color = init_patch->texture.at<cv::Vec3b>(i-x, j-y);
-                diff += vecLength2(result_color-patch_color);
+    auto *fft_patch = new Texture(result_h, result_w, 21);
+    for(int i = 0; i < result_h; ++i){
+        for(int j = 0; j < result_w; ++j){
+            if(i < patch_h && j < patch_w) {
+                fft_patch->texture.at<cv::Vec3f>(i, j) = init_patch->texture.at<cv::Vec3b>(i, j);
+            }
+            else{
+                fft_patch->texture.at<cv::Vec3f>(i, j) = cv::Vec3f(0, 0, 0);
             }
         }
-        diff /= overlap_cnt;
-        if(diff < error_c){
-            error_c = diff;
-            offset_x = x;
-            offset_y = y;
+    }
+    cv::flip(fft_patch->texture, fft_patch->texture, -1);
+    cv::Mat conv_ans = fft(fft_patch, result);
+    auto *mask = new Texture(result_h, result_w, init_patch->texture.type());
+    for(int i = 0; i < result_h; ++i){
+        for(int j = 0; j < result_w; ++j){
+            int id = posToId(result_w, i, j);
+            if(pixel_vis[id] == -1){
+                mask->texture.at<cv::Vec3b>(i, j) = cv::Vec3b(0, 0, 0);
+            }
+            else{
+                mask->texture.at<cv::Vec3b>(i, j) = cv::Vec3b(1, 1, 1);
+            }
+            cv::Vec3f tmp = fft_patch->texture.at<cv::Vec3f>(i, j);
+            fft_patch->texture.at<cv::Vec3f>(i, j) = cv::Vec3f(
+                    tmp[0]*tmp[0], tmp[1]*tmp[1], tmp[2]*tmp[2]);
         }
+    }
+    cv::Mat conv_ans2 = fft(fft_patch, mask);
+
+    auto *input_color_sum = new double[result_h*result_w];
+    for(int i = 0; i < result_h; ++i){
+        for(int j = 0; j < result_w; ++j){
+            int id = posToId(result_w, i, j);
+            cv::Vec3i tmp = result->texture.at<cv::Vec3b>(i, j);
+            input_color_sum[id] = (tmp[0]*tmp[0]+tmp[1]*tmp[1]+tmp[2]*tmp[2]);
+            input_color_sum[id] += (i == 0? 0: input_color_sum[posToId(result_w, i-1, j)]);
+            input_color_sum[id] += (j == 0? 0: input_color_sum[posToId(result_w, i, j-1)]);
+            input_color_sum[id] -= ((i == 0 || j == 0)? 0: input_color_sum[posToId(result_w, i-1, j-1)]);
+        }
+    }
+
+    double var = resultPixelVar();
+    double p_sum = 0.0;
+    std::vector<double>p_record;
+    for(auto pos: can_random_pos){
+        int x = pos.first;
+        int y = pos.second;
+        int bound_x = std::min(result_h, x+patch_h);
+        int bound_y = std::min(result_w, y+patch_w);
+        double input_color2 = input_color_sum[posToId(result_w, bound_x-1, bound_y-1)]-
+                (x == 0? 0: input_color_sum[posToId(result_w, x-1, bound_y-1)])-
+                (y == 0? 0: input_color_sum[posToId(result_w, bound_x-1, y-1)])+
+                ((x == 0 || y == 0)? 0: input_color_sum[posToId(result_w, x-1, y-1)]);
+        double output_color2 = conv_ans2.at<float>(result_h-1+x, result_w-1+y);
+        double input_mul_output = 2.0*conv_ans.at<float>(result_h-1+x, result_w-1+y);
+        double diff = input_color2-input_mul_output+output_color2;
+        int overlap_cnt = calculateRectPixel(x, y, bound_x-1, bound_y-1);
+        diff /= overlap_cnt;
+        double p = para_scale*exp(-diff/(para_k*var));
+        p_sum += p;
+        p_record.push_back(p);
+    }
+    double p_select = randomDouble(0, p_sum);
+    int p_record_cnt = 0;
+    offset_x = -1; offset_y = -1;
+    for(auto pos: can_random_pos){
+        p_select -= p_record[p_record_cnt];
+        if(p_select <= 0){
+            offset_x = pos.first;
+            offset_y = pos.second;
+            break;
+        }
+        p_record_cnt++;
     }
     assert(offset_x != -1);
     sub_offset_x = 0;
     sub_offset_y = 0;
     combine_patch = new Texture(patch_h, patch_w, init_patch->texture.type());
     combine_patch->texture = init_patch->texture.clone();
+    delete fft_patch;
+    delete mask;
+    delete[] input_color_sum;
 }
 
 void GraphCut::chooseOffsetLocal() {
@@ -321,32 +384,70 @@ void GraphCut::chooseOffsetLocal() {
     }
     if(error_region_x+sub_height < result_h)sub_height++;
     if(error_region_y+sub_width < result_w)sub_width++;
-    double error_c = MaxFlow::inf;
+    double input_color2 = 0.0;
+    int overlap_cnt = 0;
+    auto *fft_patch = new Texture(patch_h, patch_w, 21);
+    auto *mask = new Texture(patch_h, patch_w, 21);
+    for(int i = 0; i < patch_h; ++i){
+        for(int j = 0; j < patch_w; ++j){
+            if(i < sub_height && j < sub_width){
+                int nxt_x = i+error_region_x;
+                int nxt_y = j+error_region_y;
+                int nxt_id = posToId(result_w, nxt_x, nxt_y);
+                if(pixel_vis[nxt_id] == -1)continue;
+                overlap_cnt++;
+                cv::Vec3f tmp = result->texture.at<cv::Vec3b>(nxt_x, nxt_y);
+                input_color2 += (tmp[0]*tmp[0])+(tmp[1]*tmp[1])+(tmp[2]*tmp[2]);
+                fft_patch->texture.at<cv::Vec3f>(i, j) = tmp;
+                mask->texture.at<cv::Vec3f>(i, j) = cv::Vec3f(1, 1, 1);
+            }
+        }
+    }
+    assert(overlap_cnt != 0);
+    cv::flip(fft_patch->texture, fft_patch->texture, -1);
+    cv::flip(mask->texture, mask->texture, -1);
+    cv::Mat conv_ans = fft(fft_patch, init_patch);
+    for(int i = 0; i < patch_h; ++i){
+        for(int j = 0; j < patch_w; ++j){
+            cv::Vec3f tmp = init_patch->texture.at<cv::Vec3b>(i, j);
+            fft_patch->texture.at<cv::Vec3f>(i, j) =
+                    cv::Vec3f(tmp[0]*tmp[0], tmp[1]*tmp[1], tmp[2]*tmp[2]);
+        }
+    }
+    cv::Mat conv_ans2 = fft(fft_patch, mask);
     int limit_x = patch_h-sub_height;
     int limit_y = patch_w-sub_width;
     sub_offset_x = -1;
     sub_offset_y = -1;
-    int T = 2000;
-    while(T--){
-        int x = randomInt(0, limit_x-1);
-        int y = randomInt(0, limit_y-1);
-        double diff = 0;
-        for(int i = x; i < x+sub_height; ++i){
-            for(int j = y; j < y+sub_width; ++j){
-                int result_x = error_region_x+i-x;
-                int result_y = error_region_y+j-y;
-                int result_id = posToId(result_w, result_x, result_y);
-                if(pixel_vis[result_id] == -1)continue;
-                cv::Vec3i result_color = result->texture.at<cv::Vec3b>(result_x, result_y);
-                cv::Vec3i patch_color = init_patch->texture.at<cv::Vec3b>(i, j);
-                diff += vecLength2(result_color-patch_color);
+    double var = resultPixelVar();
+    double p_sum = 0.0;
+    std::vector<double>p_record;
+    for(int i = 0; i < limit_x; ++i){
+        for(int j = 0; j < limit_y; ++j) {
+            double output_color2 = conv_ans2.at<float>(patch_h-1+i, patch_w-1+j);
+            double input_mul_output = 2.0*conv_ans.at<float>(patch_h-1+i, patch_w-1+j);
+            double diff = input_color2-input_mul_output+output_color2;
+            diff /= overlap_cnt;
+            double p = para_scale*exp(-diff/(para_k*var));
+            p_sum += p;
+            p_record.push_back(p);
+        }
+    }
+    double p_select = randomDouble(0, p_sum);
+    bool flag_select = false;
+    int p_record_cnt = 0;
+    for(int i = 0; i < limit_x; ++i){
+        for(int j = 0; j < limit_y; ++j){
+            p_select -= p_record[p_record_cnt];
+            if(p_select <= 0){
+                sub_offset_x = i;
+                sub_offset_y = j;
+                flag_select = true;
+                break;
             }
+            p_record_cnt++;
         }
-        if(diff < error_c){
-            error_c = diff;
-            sub_offset_x = x;
-            sub_offset_y = y;
-        }
+        if(flag_select)break;
     }
     assert(sub_offset_x != -1);
     //printf("%d %d\n", sub_offset_x, sub_offset_y);
@@ -355,6 +456,8 @@ void GraphCut::chooseOffsetLocal() {
     combine_patch = new Texture(sub_height, sub_width, init_patch->texture.type());
     combine_patch->texture = init_patch->texture(cv::Rect(sub_offset_y, sub_offset_x,
                                                           sub_width, sub_height)).clone();
+    delete fft_patch;
+    delete mask;
 }
 
 double GraphCut::calculateCost(const cv::Vec3i &origin_color_u,
@@ -365,7 +468,7 @@ double GraphCut::calculateCost(const cv::Vec3i &origin_color_u,
     cv::Vec3i grad_patch_u = patch_color_v-patch_color_u;
     double w_ans = vecLength(origin_color_u-patch_color_u)+vecLength(origin_color_v-patch_color_v);
     //double div = vecLength(grad_origin_u)+vecLength(grad_patch_u);
-    //if(fabs(div) > MaxFlow::eps)w_ans /= div;
+    //if(fabs(div) > 1)w_ans /= div;
     return w_ans;
 }
 
@@ -474,8 +577,10 @@ void GraphCut::chooseErrorRegion(int &error_region_x, int &error_region_y,
     calculateSeamSum();
     double error_region = -1;
     int new_pixel = 0;
-    for(int i = 0; i < result_h; ++i){
-        for(int j = 0; j < result_w; ++j){
+    int limit_x = result_h-sub_patch_h/2;
+    int limit_y = result_w-sub_patch_w/2;
+    for(int i = 0; i < limit_x; ++i){
+        for(int j = 0; j < limit_y; ++j){
             int bound_x = std::min(i+sub_patch_h, result_h);
             int bound_y = std::min(j+sub_patch_w, result_w);
             int rect_pixel_sum = calculateRectPixel(i, j, bound_x-1, bound_y-1);
@@ -483,6 +588,10 @@ void GraphCut::chooseErrorRegion(int &error_region_x, int &error_region_y,
             if(rect_pixel_sum < min_overlap_coef*rect_area*min_overlap)continue;
             if(rect_area == rect_pixel_sum && pixel_vis_cnt != result_w*result_h)continue;
             double error_seam = calculateRectSeamCost(i, j, bound_x-1, bound_y-1);
+            assert(rect_pixel_sum != 0);
+            /*if(min_overlap_coef > 1){
+                error_seam /= (log(rect_pixel_sum)+1);
+            }*/
             int area_new_pixel = rect_area-rect_pixel_sum;
             if(error_seam > error_region || (error_seam == error_region && area_new_pixel > new_pixel)){
                 error_region = error_seam;
@@ -494,4 +603,56 @@ void GraphCut::chooseErrorRegion(int &error_region_x, int &error_region_y,
             }
         }
     }
+}
+
+cv::Mat GraphCut::fft(Texture *a, Texture *b) {
+    cv::Mat tmp_a_channels[3], tmp_b_channels[3];
+    cv::split(a->texture, tmp_a_channels);
+    cv::split(b->texture, tmp_b_channels);
+    cv::Mat a_channels[3], b_channels[3];
+    for(int i = 0; i < 3; ++i){
+        a_channels[i] = cv::Mat_<float>(tmp_a_channels[i]);
+        b_channels[i] = cv::Mat_<float>(tmp_b_channels[i]);
+    }
+    int dft_m = cv::getOptimalDFTSize(a_channels[0].rows+b_channels[0].rows-1);
+    int dft_n = cv::getOptimalDFTSize(a_channels[0].cols+b_channels[0].cols-1);
+    cv::Mat conv_ans = cv::Mat::zeros(dft_m, dft_n, CV_32F);
+    for(int i = 0; i < 3; ++i){
+        cv::Mat dft_a = cv::Mat::zeros(dft_m, dft_n, CV_32F);
+        cv::Mat dft_b = cv::Mat::zeros(dft_m, dft_n, CV_32F);
+        cv::Mat dft_a_part = dft_a(cv::Rect(0, 0, a_channels[i].cols, a_channels[i].rows));
+        cv::Mat dft_b_part = dft_b(cv::Rect(0, 0, b_channels[i].cols, b_channels[i].rows));
+        b_channels[i].copyTo(dft_b_part);
+        a_channels[i].copyTo(dft_a_part);
+        cv::dft(dft_a, dft_a, 0, a_channels[0].rows);
+        cv::dft(dft_b, dft_b, 0, b_channels[0].rows);
+        cv::mulSpectrums(dft_a, dft_b, dft_a, 0, false);
+        cv::idft(dft_a, dft_a, CV_HAL_DFT_SCALE, a_channels[i].rows+b_channels[i].rows-1);
+        conv_ans = conv_ans+dft_a;
+    }return conv_ans;
+}
+
+double GraphCut::resultPixelVar() {
+    double avg = 0;
+    int pixel_cnt = 0;
+    for(int i = 0; i < result_h; ++i){
+        for(int j = 0; j < result_w; ++j){
+            int id = posToId(result_w, i, j);
+            if(pixel_vis[id] == -1)continue;
+            pixel_cnt++;
+            avg += vecLength(result->texture.at<cv::Vec3b>(i, j));
+        }
+    }
+    avg /= pixel_cnt;
+    double var = 0;
+    for(int i = 0; i < result_h; ++i){
+        for(int j = 0; j < result_w; ++j){
+            int id = posToId(result_w, i, j);
+            if(pixel_vis[id] == -1)continue;
+            double tmp = vecLength(result->texture.at<cv::Vec3b>(i, j))-avg;
+            var += (tmp*tmp);
+        }
+    }
+    var /= pixel_cnt;
+    return var;
 }
