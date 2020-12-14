@@ -179,14 +179,9 @@ bool GraphCut::run(int h, int w, int iter) {
     while(pixel_vis_cnt != result_h*result_w){
         run_iter++;
         calculatePixelVisSum();
-        printf("1 ");
         chooseOffset();
-        printf("2 ");
         buildGraph(run_iter);
         printf("pixel = %d\n", pixel_vis_cnt);
-        if(run_iter % 10 == 0) {
-            showResult();
-        }
     }
     calculatePixelVisSum();
     printf("------------------\n");
@@ -463,12 +458,14 @@ void GraphCut::chooseOffsetLocal() {
 double GraphCut::calculateCost(const cv::Vec3i &origin_color_u,
                                const cv::Vec3i &origin_color_v,
                                const cv::Vec3i &patch_color_u,
-                               const cv::Vec3i &patch_color_v) {
+                               const cv::Vec3i &patch_color_v) const {
     cv::Vec3i grad_origin_u = origin_color_v-origin_color_u;
     cv::Vec3i grad_patch_u = patch_color_v-patch_color_u;
     double w_ans = vecLength(origin_color_u-patch_color_u)+vecLength(origin_color_v-patch_color_v);
-    //double div = vecLength(grad_origin_u)+vecLength(grad_patch_u);
-    //if(fabs(div) > 1)w_ans /= div;
+    if(use_grad) {
+        double div = vecLength(grad_origin_u)+vecLength(grad_patch_u);
+        if(fabs(div) > 1)w_ans /= div;
+    }
     return w_ans;
 }
 
@@ -589,9 +586,7 @@ void GraphCut::chooseErrorRegion(int &error_region_x, int &error_region_y,
             if(rect_area == rect_pixel_sum && pixel_vis_cnt != result_w*result_h)continue;
             double error_seam = calculateRectSeamCost(i, j, bound_x-1, bound_y-1);
             assert(rect_pixel_sum != 0);
-            /*if(min_overlap_coef > 1){
-                error_seam /= (log(rect_pixel_sum)+1);
-            }*/
+            //error_seam /= (log10(rect_pixel_sum)+10);
             int area_new_pixel = rect_area-rect_pixel_sum;
             if(error_seam > error_region || (error_seam == error_region && area_new_pixel > new_pixel)){
                 error_region = error_seam;
@@ -655,4 +650,12 @@ double GraphCut::resultPixelVar() {
     }
     var /= pixel_cnt;
     return var;
+}
+
+void GraphCut::set_para_k(double k) {
+    para_k = k;
+}
+
+void GraphCut::set_use_grad(bool use) {
+    use_grad = use;
 }

@@ -23,6 +23,8 @@ public:
     ~GraphCut();
     bool run(int h, int w, int iter);
     void set_choose_option(enum Strategy option);
+    void set_para_k(double k);
+    void set_use_grad(bool use);
     void showResult();
     void store(const char* result_path);
     void storeSeam(const char* seam_path);
@@ -50,6 +52,8 @@ private:
     double *seam_left_sum{nullptr};
     double *seam_up_sum{nullptr};
 
+    bool use_grad = false;
+
     double para_k = 0.05;
     double para_scale = 1000;
 
@@ -75,12 +79,12 @@ private:
     void chooseOffsetRandom();
     void chooseOffsetGlobal();
     void chooseOffsetLocal();
-    static double calculateCost(const cv::Vec3i &origin_color_u, const cv::Vec3i &origin_color_v,
-                  const cv::Vec3i &patch_color_u, const cv::Vec3i &patch_color_v);
+    double calculateCost(const cv::Vec3i &origin_color_u, const cv::Vec3i &origin_color_v,
+                  const cv::Vec3i &patch_color_u, const cv::Vec3i &patch_color_v) const;
     static cv::Mat fft(Texture *a, Texture* b);
     double resultPixelVar();
 
-    double randomDouble(double st, double ed);
+    static double randomDouble(double st, double ed);
 };
 
 #endif //PROJECT_GRAPHCUT_H
