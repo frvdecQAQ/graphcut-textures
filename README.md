@@ -118,8 +118,6 @@ $$
 
 ​	对于新放置的纹理图片中的非重叠区域，直接更新对应像素点的颜色即可。
 
-![cut](README.assets/cut.jpg) ![cut_seam](README.assets/cut_seam.jpg)
-
 
 
 
@@ -134,12 +132,6 @@ $$
 - 在未覆盖满生成图片前，新放置的纹理图片必须要覆盖到之前未被覆盖的像素点
 
 ​    先通过遍历每一个偏移量，选择满足条件可放置的偏移量的集合，然后在这个集合里进行随机选取。判断重叠区域的像素数量和是否覆盖未覆盖的像素点可以使用二维前缀和进行预处理后进行查询。
-
-![random_green](README.assets/random_green.jpg)![random_green_seam](README.assets/random_green_seam.jpg)
-
-![random_keyboard](README.assets/random_keyboard.jpg)![random_keyboard_seam](README.assets/random_keyboard_seam.jpg)
-
-![random_strawberry](README.assets/random_strawberry.jpg)![random_strawberry_seam](README.assets/random_strawberry_seam.jpg)
 
 ​	可以看出随机生成偏移算法在生成随机纹理时有一定的效果，但是在面对结构性较强的纹理时并不能产生较好的结果
 
@@ -170,12 +162,6 @@ $$
 
 ​	设置`T=200~1000`时就已经有相当不错的效果了
 
-![global_green](README.assets/global_green.jpg)![global_green_seam](README.assets/global_green_seam.jpg)
-
-![global_keyboard](README.assets/global_keyboard.jpg)![global_keyboard_seam](README.assets/global_keyboard_seam.jpg)
-
-![global_strawberry](README.assets/global_strawberry.jpg)![global_strawberry_seam](README.assets/global_strawberry_seam.jpg)
-
 ​	
 
 #### 2.3 匹配子块的最佳位置
@@ -187,12 +173,6 @@ $$
 C(t) = \frac{1}{|S_o|}\Sigma_{p\in S_o}|I(p-t)-O(p)|^2
 $$
 ​	这里相比论文的式子增加了归一化，原因是实际实现中发现$C(t)$可能会很大，在计算$p(t)$的可能会出现精度问题导致概率变为0。之后的计算$p(t)$的方式和选择概率与2.2是一致的，同样也可以使用同2.2里随机化的方法对选取概率进行近似以加速。
-
-![local_green](README.assets/local_green.jpg)![local_green_seam](README.assets/local_green_seam.jpg)
-
-![local_keyboard](README.assets/local_keyboard.jpg)![local_keyboard_seam](README.assets/local_keyboard_seam.jpg)
-
-![local_strawberry](README.assets/local_strawberry.jpg)![local_strawberry_seam](README.assets/local_strawberry_seam.jpg)
 
 
 
@@ -288,27 +268,13 @@ cv::Mat GraphCut::fft(Texture *a, Texture *b) {
 ​	取论文中的图，参见`data/front.jpg​`和`data/background.jpg`，进行简单的人工图像编辑生成`data/front_edit.jpg`，其中画黑线的部分是编辑时我认为`front.jpg`在拼接的时候应该保留的信息。
 
 ​	`blend`函数中先读取以上三张图片，对重叠区域建图，其中对于画黑线的部分强制连接一条+oo的边到汇点，求割。根据求出来的割可以得到`mask`，对`mask`进行简单的腐蚀和高斯模糊操作后，将两张要拼接的图像依照`mask`进行融合，就可以得到相当不错的效果。
-
-​	拼接效果如下：
-
-![front](README.assets/front.jpg)![background](README.assets/background.jpg)
-![blend](README.assets/blend.jpg)
-
  
 
 ## 三、总结和收获
 
 ### 1、结果展示
 
-根据对比，使用整块匹配最终合成的效果较好，以320x320为合成图像的高和宽，结果展示如下：
-
-![green](README.assets/green.jpg)![green_seam](README.assets/green_seam.jpg)
-
-![keyboard](README.assets/keyboard.jpg)![keyboard_seam](README.assets/keyboard_seam.jpg)
-
-![strawberry](README.assets/strawberry.jpg)![strawberry_seam](README.assets/strawberry_seam.jpg)
-
-![chickpeas](README.assets/chickpeas.jpg)![chickpeas_seam](README.assets/chickpeas_seam.jpg)
+根据对比，使用整块匹配最终合成的效果较好，以320x320为合成图像的高和宽，效果可以参见README.assets和result目录
 
 
 
@@ -319,11 +285,3 @@ cv::Mat GraphCut::fft(Texture *a, Texture *b) {
 ​	第二个遗憾是关于子块匹配的算法，由于error_region找到的位置并不能产生很多的新像素，这就导致子块匹配算法在到铺满整个画面过程中的迭代次数会很多，耗时较长。同时也会产生过多无意义的接缝。在这方面应该还是有优化余地的，但是我尝试了很多能够增大error_region覆盖像素数量的方案，但是往往都是以生成质量的下降为代价的。
 
 ​	第三个遗憾就是由于在理解论文和反复修改实现的过程中耗费了过多的时间，导致没有足够的时间和精力去完成GUI了，影像拼接也只是进行了简单的实现，并没有形成规范的接口。
-
-### 3、收获
-
-​	在反复修改实现的过程中，我意识到了从理解论文的大致思路到真正写出代码做出较为漂亮的实现，是需要付出很多努力，踩很多坑，走许多弯路的。在实际工程实践的过程中，一定要先对整体的实现有一个较为清晰的认识，才能在写起来得心应手。
-
-​	媒体计算是一门非常有趣的课，效果非常直观，而且目前来看可解释性很强，也有很多有意思的应用场景。
-
-​	感谢老师的教导和助教的批阅！
